@@ -32,3 +32,15 @@ router.get('/me', async (req, res) => {
   res.json({ items });
 });
 
+router.patch('/:id/status', async (req, res) => {
+  const schema = z.object({ status: z.enum(['RECEIVED', 'UNDER_REVIEW', 'INTERVIEW', 'REJECTED', 'HIRED']) });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  try {
+    const updated = await prisma.application.update({ where: { id: req.params.id }, data: { status: parsed.data.status } });
+    res.json(updated);
+  } catch (e) {
+    return res.status(404).json({ error: 'Application not found' });
+  }
+});
+

@@ -45,3 +45,19 @@ router.post('/', authMiddleware, async (req, res) => {
   res.status(201).json(created);
 });
 
+// Applicants Kanban board
+router.get('/:id/applicants/board', authMiddleware, async (req, res) => {
+  const jobId = req.params.id;
+  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  const applications = await prisma.application.findMany({
+    where: { jobId },
+    include: { user: { select: { id: true, email: true, talentProfile: true } } }
+  });
+  const statuses = ['RECEIVED', 'UNDER_REVIEW', 'INTERVIEW', 'REJECTED', 'HIRED'] as const;
+  const columns: Record<string, any[]> = {};
+  for (const s of statuses) columns[s] = [];
+  for (const a of applications) columns[a.status]?.push(a);
+  res.json({ jobId, columns });
+});
+
