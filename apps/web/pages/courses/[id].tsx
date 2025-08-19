@@ -7,7 +7,7 @@ const fetcher = (url: string) => fetch(url).then(r => r.json());
 export default function CourseDetail() {
   const router = useRouter();
   const { id } = router.query as { id?: string };
-  const { data } = useSWR(id ? `${apiBase}/courses/${id}` : null, fetcher);
+  const { data, mutate } = useSWR(id ? `${apiBase}/courses/${id}` : null, fetcher);
 
   const enroll = async () => {
     const token = localStorage.getItem('token');
@@ -24,6 +24,13 @@ export default function CourseDetail() {
     alert(`التقدم: ${j.progress}% — ${j.status}`);
   };
 
+  const updateProgress = async (progress: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) { alert('سجّل الدخول أولاً'); return; }
+    await fetch(`${apiBase}/courses/${id}/progress`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ progress }) });
+    await checkProgress();
+  };
+
   if (!id || !data) return <main style={{ padding: 24 }}>Loading...</main>;
   return (
     <main style={{ padding: 24 }}>
@@ -31,6 +38,16 @@ export default function CourseDetail() {
       <p>{data.description}</p>
       <button onClick={enroll}>تسجيل</button>
       <button onClick={checkProgress} style={{ marginInlineStart: 8 }}>عرض التقدم</button>
+      <div style={{ marginTop: 12 }}>
+        <span>تحديث التقدم:</span>
+        {[25,50,75,100].map(p => <button key={p} onClick={() => updateProgress(p)} style={{ marginInlineStart: 6 }}>{p}%</button>)}
+      </div>
+      <h3 style={{ marginTop: 24 }}>الدروس</h3>
+      <ol>
+        {(data?.lessons || []).map((l: any) => (
+          <li key={l.id}><strong>{l.order}. {l.title}</strong><div>{l.content}</div></li>
+        ))}
+      </ol>
     </main>
   );
 }

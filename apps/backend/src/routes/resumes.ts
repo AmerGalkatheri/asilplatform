@@ -44,6 +44,10 @@ router.post('/:id/parse', authMiddleware, async (req, res) => {
     update: { skillsCsv: skills || null, summary: summary || null },
     create: { resumeId: resume.id, skillsCsv: skills || null, summary: summary || null }
   });
+  // award points and notify
+  const user = (req as any).user as { id: string };
+  await prisma.gamificationTransaction.create({ data: { userId: user.id, points: 20, reason: 'RESUME_PARSED' } });
+  await prisma.notification.create({ data: { userId: user.id, message: 'تم تحليل سيرتك الذاتية وحساب المهارات تلقائيًا.' } });
   res.json(parsed);
 });
 

@@ -19,6 +19,8 @@ model User {
   notes         ApplicationNote[] @relation("UserNotes")
   courses       Course[]        @relation("CourseAuthor")
   resumes       Resume[]
+  notifications Notification[]
+  points        GamificationTransaction[]
 }
 
 model TalentProfile {
@@ -142,5 +144,23 @@ model Certificate {
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
   enrollmentId String  @unique
   issuedAt   DateTime  @default(now())
+}
+
+model GamificationTransaction {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  points     Int
+  reason     String
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  message    String
+  createdAt  DateTime @default(now())
+  readAt     DateTime?
 }
 
