@@ -1,35 +1,47 @@
 import { Router } from 'express';
 import { z } from 'zod';
-
-type Job = {
-  id: string;
-  title: string;
-  location?: string;
-  contractType?: string;
-  experienceLevel?: string;
-  salaryMin?: number;
-  salaryMax?: number;
-  publishedAt: string;
-};
-
-const jobs: Job[] = [
-  { id: '1', title: 'Frontend Engineer', location: 'Riyadh', contractType: 'Full-time', experienceLevel: 'Mid', salaryMin: 12000, salaryMax: 18000, publishedAt: new Date().toISOString() },
-  { id: '2', title: 'Backend Engineer', location: 'Remote', contractType: 'Contract', experienceLevel: 'Senior', salaryMin: 18000, salaryMax: 25000, publishedAt: new Date().toISOString() }
-];
+import { prisma } from '../lib/prisma';
+import { authMiddleware } from '../middleware/auth';
 
 export const router = Router();
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const schema = z.object({ q: z.string().optional() });
   const parsed = schema.safeParse(req.query);
-  const q = parsed.success && parsed.data.q ? parsed.data.q.toLowerCase() : '';
-  const filtered = q ? jobs.filter(j => j.title.toLowerCase().includes(q)) : jobs;
-  res.json({ items: filtered });
+  const q = parsed.success && parsed.data.q ? parsed.data.q : undefined;
+  const items = await prisma.job.findMany({
+    where: q
+      ? {
+          OR: [
+            { title: { contains: q, mode: 'insensitive' } },
+            { location: { contains: q, mode: 'insensitive' } }
+          ]
+        }
+      : undefined,
+    orderBy: { publishedAt: 'desc' }
+  });
+  res.json({ items });
 });
 
-router.get('/:id', (req, res) => {
-  const job = jobs.find(j => j.id === req.params.id);
+router.get('/:id', async (req, res) => {
+  const job = await prisma.job.findUnique({ where: { id: req.params.id } });
   if (!job) return res.status(404).json({ error: 'Not found' });
   res.json(job);
+});
+
+router.post('/', authMiddleware, async (req, res) => {
+  const schema = z.object({
+    title: z.string().min(3),
+    description: z.string().min(10),
+    location: z.string().optional(),
+    contractType: z.string().optional(),
+    experienceLevel: z.string().optional(),
+    salaryMin: z.number().int().optional(),
+    salaryMax: z.number().int().optional()
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const created = await prisma.job.create({ data: parsed.data });
+  res.status(201).json(created);
 });
 
