@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  passwordHash  String
+  role          String          @default("TALENT")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  talentProfile TalentProfile?
+  applications  Application[]
+  notes         ApplicationNote[] @relation("UserNotes")
+  courses       Course[]        @relation("CourseAuthor")
+  resumes       Resume[]
+  notifications Notification[]
+  points        GamificationTransaction[]
+  enrollments   Enrollment[]
+}
+
+model TalentProfile {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @unique
+  fullName    String?
+  headline    String?
+  location    String?
+  skillsCsv   String?
+  summary     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Job {
+  id              String    @id @default(cuid())
+  title           String
+  description     String
+  location        String?
+  contractType    String?
+  experienceLevel String?
+  salaryMin       Int?
+  salaryMax       Int?
+  publishedAt     DateTime  @default(now())
+  applications    Application[]
+
+  @@index([title])
+  @@index([location])
+  @@index([contractType])
+  @@index([experienceLevel])
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  job         Job               @relation(fields: [jobId], references: [id])
+  jobId       String
+  user        User              @relation(fields: [userId], references: [id])
+  userId      String
+  coverLetter String?
+  status      String            @default("RECEIVED")
+  rating      Int?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  notes       ApplicationNote[]
+
+  @@unique([jobId, userId])
+}
+
+model ApplicationNote {
+  id             String       @id @default(cuid())
+  application    Application  @relation(fields: [applicationId], references: [id])
+  applicationId  String
+  author         User         @relation("UserNotes", fields: [authorUserId], references: [id])
+  authorUserId   String
+  content        String
+  createdAt      DateTime     @default(now())
+}
+
+model Resume {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  filename     String
+  mimetype     String
+  size         Int
+  objectKey    String
+  uploadedAt   DateTime @default(now())
+  parseResult  ResumeParseResult?
+}
+
+model ResumeParseResult {
+  id         String  @id @default(cuid())
+  resume     Resume  @relation(fields: [resumeId], references: [id])
+  resumeId   String  @unique
+  skillsCsv  String?
+  summary    String?
+  createdAt  DateTime @default(now())
+}
+
+model Course {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  author        User     @relation("CourseAuthor", fields: [authorUserId], references: [id])
+  authorUserId  String
+  published     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  enrollments   Enrollment[]
+  lessons       Lesson[]
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  course     Course   @relation(fields: [courseId], references: [id])
+  courseId   String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  progress   Int      @default(0)
+  status     String   @default("ENROLLED")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  certificate Certificate?
+
+  @@unique([courseId, userId])
+}
+
+model Lesson {
+  id         String   @id @default(cuid())
+  course     Course   @relation(fields: [courseId], references: [id])
+  courseId   String
+  title      String
+  content    String
+  order      Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Certificate {
+  id         String   @id @default(cuid())
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String  @unique
+  issuedAt   DateTime  @default(now())
+}
+
+model GamificationTransaction {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  points     Int
+  reason     String
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  message    String
+  createdAt  DateTime @default(now())
+  readAt     DateTime?
+}
+
