@@ -85,7 +85,7 @@ model Resume {
   filename     String
   mimetype     String
   size         Int
-  path         String
+  objectKey    String
   uploadedAt   DateTime @default(now())
   parseResult  ResumeParseResult?
 }
@@ -109,6 +109,7 @@ model Course {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   enrollments   Enrollment[]
+  lessons       Lesson[]
 }
 
 model Enrollment {
@@ -123,5 +124,23 @@ model Enrollment {
   updatedAt  DateTime @updatedAt
 
   @@unique([courseId, userId])
+}
+
+model Lesson {
+  id         String   @id @default(cuid())
+  course     Course   @relation(fields: [courseId], references: [id])
+  courseId   String
+  title      String
+  content    String
+  order      Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Certificate {
+  id         String   @id @default(cuid())
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String  @unique
+  issuedAt   DateTime  @default(now())
 }
 
