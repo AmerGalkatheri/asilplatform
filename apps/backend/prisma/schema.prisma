@@ -11,11 +11,14 @@ model User {
   id            String          @id @default(cuid())
   email         String          @unique
   passwordHash  String
+  role          String          @default("TALENT")
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   talentProfile TalentProfile?
   applications  Application[]
   notes         ApplicationNote[] @relation("UserNotes")
+  courses       Course[]        @relation("CourseAuthor")
+  resumes       Resume[]
 }
 
 model TalentProfile {
@@ -73,5 +76,52 @@ model ApplicationNote {
   authorUserId   String
   content        String
   createdAt      DateTime     @default(now())
+}
+
+model Resume {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  filename     String
+  mimetype     String
+  size         Int
+  path         String
+  uploadedAt   DateTime @default(now())
+  parseResult  ResumeParseResult?
+}
+
+model ResumeParseResult {
+  id         String  @id @default(cuid())
+  resume     Resume  @relation(fields: [resumeId], references: [id])
+  resumeId   String  @unique
+  skillsCsv  String?
+  summary    String?
+  createdAt  DateTime @default(now())
+}
+
+model Course {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  author        User     @relation("CourseAuthor", fields: [authorUserId], references: [id])
+  authorUserId  String
+  published     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  enrollments   Enrollment[]
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  course     Course   @relation(fields: [courseId], references: [id])
+  courseId   String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  progress   Int      @default(0)
+  status     String   @default("ENROLLED")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([courseId, userId])
 }
 

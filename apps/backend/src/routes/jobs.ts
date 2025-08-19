@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, requireRole } from '../middleware/auth';
 
 export const router = Router();
 
@@ -29,7 +29,7 @@ router.get('/:id', async (req, res) => {
   res.json(job);
 });
 
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, requireRole('ADMIN', 'RECRUITER'), async (req, res) => {
   const schema = z.object({
     title: z.string().min(3),
     description: z.string().min(10),
@@ -46,7 +46,7 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // Applicants Kanban board
-router.get('/:id/applicants/board', authMiddleware, async (req, res) => {
+router.get('/:id/applicants/board', authMiddleware, requireRole('ADMIN', 'RECRUITER'), async (req, res) => {
   const jobId = req.params.id;
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) return res.status(404).json({ error: 'Job not found' });

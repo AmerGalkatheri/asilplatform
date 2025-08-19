@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, requireRole } from '../middleware/auth';
 
 export const router = Router();
 
@@ -32,7 +32,7 @@ router.get('/me', async (req, res) => {
   res.json({ items });
 });
 
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', requireRole('ADMIN', 'RECRUITER'), async (req, res) => {
   const schema = z.object({ status: z.enum(['RECEIVED', 'UNDER_REVIEW', 'INTERVIEW', 'REJECTED', 'HIRED']) });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
@@ -44,7 +44,7 @@ router.patch('/:id/status', async (req, res) => {
   }
 });
 
-router.patch('/:id/rating', async (req, res) => {
+router.patch('/:id/rating', requireRole('ADMIN', 'RECRUITER'), async (req, res) => {
   const schema = z.object({ rating: z.number().int().min(1).max(5) });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
@@ -56,7 +56,7 @@ router.patch('/:id/rating', async (req, res) => {
   }
 });
 
-router.post('/:id/notes', async (req, res) => {
+router.post('/:id/notes', requireRole('ADMIN', 'RECRUITER'), async (req, res) => {
   const schema = z.object({ content: z.string().min(1) });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
@@ -71,7 +71,7 @@ router.post('/:id/notes', async (req, res) => {
   }
 });
 
-router.get('/:id/notes', async (req, res) => {
+router.get('/:id/notes', requireRole('ADMIN', 'RECRUITER'), async (req, res) => {
   const notes = await prisma.applicationNote.findMany({
     where: { applicationId: req.params.id },
     orderBy: { createdAt: 'desc' },

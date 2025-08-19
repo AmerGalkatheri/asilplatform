@@ -18,7 +18,7 @@ router.post('/register', async (req, res) => {
   const exists = await prisma.user.findUnique({ where: { email } });
   if (exists) return res.status(409).json({ error: 'Email already used' });
   const passwordHash = await bcrypt.hash(password, 10);
-  const created = await prisma.user.create({ data: { email, passwordHash, talentProfile: { create: {} } } });
+  const created = await prisma.user.create({ data: { email, passwordHash, role: 'TALENT', talentProfile: { create: {} } } });
   return res.status(201).json({ id: created.id, email: created.email });
 });
 
@@ -31,7 +31,7 @@ router.post('/login', async (req, res) => {
   if (!user) return res.status(401).json({ error: 'Invalid credentials' });
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
-  const token = jwt.sign({ sub: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign({ sub: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
   return res.json({ token });
 });
 
