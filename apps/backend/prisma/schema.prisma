@@ -15,6 +15,7 @@ model User {
   updatedAt     DateTime        @updatedAt
   talentProfile TalentProfile?
   applications  Application[]
+  notes         ApplicationNote[] @relation("UserNotes")
 }
 
 model TalentProfile {
@@ -56,9 +57,21 @@ model Application {
   userId      String
   coverLetter String?
   status      String            @default("RECEIVED")
+  rating      Int?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+  notes       ApplicationNote[]
 
   @@unique([jobId, userId])
+}
+
+model ApplicationNote {
+  id             String       @id @default(cuid())
+  application    Application  @relation(fields: [applicationId], references: [id])
+  applicationId  String
+  author         User         @relation("UserNotes", fields: [authorUserId], references: [id])
+  authorUserId   String
+  content        String
+  createdAt      DateTime     @default(now())
 }
 

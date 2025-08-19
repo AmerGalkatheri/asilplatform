@@ -20,6 +20,18 @@ export default function Board() {
     mutate();
   };
 
+  const setRating = async (appId: string, rating: number) => {
+    if (!token) return alert('سجّل الدخول');
+    await fetch(`${apiBase}/applications/${appId}/rating`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ rating }) });
+    mutate();
+  };
+
+  const addNote = async (appId: string, content: string) => {
+    if (!token) return alert('سجّل الدخول');
+    await fetch(`${apiBase}/applications/${appId}/notes`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ content }) });
+    mutate();
+  };
+
   if (!id) return null;
   if (!data) return <main style={{ padding: 24 }}>Loading...</main>;
 
@@ -32,8 +44,14 @@ export default function Board() {
             <h3>{s}</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(data?.columns?.[s] || []).map((a: any) => (
-                <div key={a.id} style={{ border: '1px solid #eee', borderRadius: 6, padding: 8 }}>
+                <div key={a.id} style={{ border: '1px solid #eee', borderRadius: 6, padding: 8, display:'flex', flexDirection:'column', gap:6 }}>
                   <div>{a.user?.email}</div>
+                  <div>Rating: {a.rating ?? '-'} { [1,2,3,4,5].map(n => (<button key={n} onClick={() => setRating(a.id, n)}>{n}</button>)) }</div>
+                  <div>Notes: {a._count?.notes ?? 0}</div>
+                  <form onSubmit={(e) => { e.preventDefault(); const input = (e.currentTarget.elements.namedItem('note') as HTMLInputElement); const val = input.value.trim(); if (val) { addNote(a.id, val); input.value=''; } }}>
+                    <input name="note" placeholder="أضف ملاحظة" />
+                    <button type="submit">إضافة</button>
+                  </form>
                   <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
                     {STATUSES.filter(st => st !== s).map(st => (
                       <button key={st} onClick={() => updateStatus(a.id, st)}>{st}</button>

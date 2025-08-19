@@ -52,7 +52,11 @@ router.get('/:id/applicants/board', authMiddleware, async (req, res) => {
   if (!job) return res.status(404).json({ error: 'Job not found' });
   const applications = await prisma.application.findMany({
     where: { jobId },
-    include: { user: { select: { id: true, email: true, talentProfile: true } } }
+    include: {
+      user: { select: { id: true, email: true, talentProfile: true } },
+      _count: { select: { notes: true } }
+    },
+    orderBy: { createdAt: 'desc' }
   });
   const statuses = ['RECEIVED', 'UNDER_REVIEW', 'INTERVIEW', 'REJECTED', 'HIRED'] as const;
   const columns: Record<string, any[]> = {};
