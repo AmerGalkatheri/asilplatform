@@ -21,6 +21,7 @@ model User {
   resumes       Resume[]
   notifications Notification[]
   points        GamificationTransaction[]
+  enrollments   Enrollment[]
 }
 
 model TalentProfile {
@@ -124,6 +125,7 @@ model Enrollment {
   status     String   @default("ENROLLED")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  certificate Certificate?
 
   @@unique([courseId, userId])
 }
