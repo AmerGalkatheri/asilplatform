@@ -8,7 +8,7 @@ async function main() {
   const passwordHash = await bcrypt.hash('password123', 10);
   const admin = await prisma.user.upsert({
     where: { email },
-    update: {},
+    update: { role: 'ADMIN' },
     create: { email, passwordHash, role: 'ADMIN', talentProfile: { create: { fullName: 'Demo User', skillsCsv: 'react,typescript,nextjs' } } }
   });
 
@@ -24,7 +24,12 @@ async function main() {
 
   const courseCount = await prisma.course.count();
   if (courseCount === 0) {
-    await prisma.course.create({ data: { title: 'أساسيات Next.js', description: 'دورة تمهيدية لـ Next.js', authorUserId: admin.id } });
+    const course = await prisma.course.create({ data: { title: 'أساسيات Next.js', description: 'دورة تمهيدية لـ Next.js', authorUserId: admin.id } });
+    await prisma.lesson.createMany({ data: [
+      { courseId: course.id, title: 'مقدمة', content: 'نظرة عامة', order: 1 },
+      { courseId: course.id, title: 'الإعداد', content: 'بيئة العمل', order: 2 },
+      { courseId: course.id, title: 'المفاهيم', content: 'الأساسيات', order: 3 }
+    ] });
   }
 
   console.log('Seed completed. Admin user:', admin.email);
