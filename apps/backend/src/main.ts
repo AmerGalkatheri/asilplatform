@@ -10,6 +10,7 @@ import { router as applicationsRouter } from './routes/applications';
 import { router as coursesRouter } from './routes/courses';
 import { router as resumesRouter } from './routes/resumes';
 import { router as adminRouter } from './routes/admin';
+import { router as meRouter } from './routes/me';
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use('/applications', applicationsRouter);
 app.use('/courses', coursesRouter);
 app.use('/resumes', resumesRouter);
 app.use('/admin', adminRouter);
+app.use('/me', meRouter);
 
 const port = Number(process.env.PORT || 4000);
 app.listen(port, () => {
